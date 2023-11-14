@@ -4,7 +4,7 @@ robot dapat bergerak dan mengambil seedling dengan control remote.
 perbaikan:
 1. buat tempat untuk peletakkan seedling
 2. perbaiki sensor untuk putaran gripper
-   a. untuk saat ini opsi yang dipunya adalah menggunakan power window atau solenoid untuk stopper mekanik,
+   a. untuk saat ini opsi yang dipunya adalah menggunakan wormwindow atau solenoid untuk stopper mekanik,
    dan sensor tambahan untuk indikasi gripper untuk menjepit opsi saat ini menggunakan limit yang batangnya menutup 2 arah
    sensor IR (kuning), atau bisa menggunakan optik.
 3. untuk pengoperasian robot akan digunakan auto jika memungkinkan dan jika tidak maka akan dilakukan semi-auto.
