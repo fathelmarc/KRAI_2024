@@ -90,42 +90,42 @@ void loop() {
   Usb.Task();
   float imunow = hadap;
   setMotor(1,40,PWM,CW,CCW);
-//  if (PS3.PS3Connected || PS3.PS3NavigationConnected) {
-//    if (PS3.getAnalogHat(LeftHatX) > 137 || PS3.getAnalogHat(LeftHatX) < 117 || PS3.getAnalogHat(LeftHatY) > 137 ||
-//        PS3.getAnalogHat(LeftHatY) < 117 || PS3.getAnalogHat(RightHatX) > 137 || PS3.getAnalogHat(RightHatX) < 117 ||
-//        PS3.getAnalogHat(RightHatY) > 137 || PS3.getAnalogHat(RightHatY) < 117 )
-//    {
-//      float hx = (PS3.getAnalogHat(LeftHatX) - 127.5) * speedMax / 127.5;
-//      float hy = (-PS3.getAnalogHat(LeftHatY) + 127.5) * speedMax / 127.5;
-//      float ht = (PS3.getAnalogButton(L2) - PS3.getAnalogButton(R2)) * rotateMax / 255.0;
-//      if (mode == true) {
-//        hx = -hx;
-//        hy = -hy;
-//      }
-//      Serial.println("gerak x,y");
-//      koordinat(hx, hy, imunow);
-//    } else if (PS3.getAnalogButton(CIRCLE)) {
-//      koordinat(0, 0, 90);
-//      Serial.println(90);
-//    } else if (PS3.getAnalogButton(TRIANGLE)) {
-//      koordinat(0, 0, 0);
-//      Serial.println(0);
-//    } else if (PS3.getAnalogButton(SQUARE)) {
-//      koordinat(0, 0, -90);
-//      Serial.println(-90);
-//    } else if ( PS3.getAnalogButton(R2)) {
-//      setMotor(1, 40, PWM, CW, CCW);
-//      Serial.println("putar");
-//    } else if (PS3.getButtonClick(R1)) {
-//      setMotor(1, 45, PWM, CW, CCW);
-//    } else if (PS3.getButtonClick(PS)) {
-//      setMotor(0, 0, PWM, CW, CCW);
-//    }
-//    else {
-//      setMotor(0, 0, PWM, CW, CCW);
-//      koordinat(0, 0, imunow);
-//    }
-//  }
+ if (PS3.PS3Connected || PS3.PS3NavigationConnected) {
+   if (PS3.getAnalogHat(LeftHatX) > 137 || PS3.getAnalogHat(LeftHatX) < 117 || PS3.getAnalogHat(LeftHatY) > 137 ||
+       PS3.getAnalogHat(LeftHatY) < 117 || PS3.getAnalogHat(RightHatX) > 137 || PS3.getAnalogHat(RightHatX) < 117 ||
+       PS3.getAnalogHat(RightHatY) > 137 || PS3.getAnalogHat(RightHatY) < 117 )
+   {
+     float hx = (PS3.getAnalogHat(LeftHatX) - 127.5) * speedMax / 127.5;
+     float hy = (-PS3.getAnalogHat(LeftHatY) + 127.5) * speedMax / 127.5;
+     float ht = (PS3.getAnalogButton(L2) - PS3.getAnalogButton(R2)) * rotateMax / 255.0;
+     if (mode == true) {
+       hx = -hx;
+       hy = -hy;
+     }
+     Serial.println("gerak x,y");
+     koordinat(hx, hy, imunow);
+   } else if (PS3.getAnalogButton(CIRCLE)) {
+     koordinat(0, 0, 90);
+     Serial.println(90);
+   } else if (PS3.getAnalogButton(TRIANGLE)) {
+     koordinat(0, 0, 0);
+     Serial.println(0);
+   } else if (PS3.getAnalogButton(SQUARE)) {
+     koordinat(0, 0, -90);
+     Serial.println(-90);
+   } else if ( PS3.getAnalogButton(R2)) {
+     setMotor(1, 40, PWM, CW, CCW);
+     Serial.println("putar");
+   } else if (PS3.getButtonClick(R1)) {
+     setMotor(1, 45, PWM, CW, CCW);
+   } else if (PS3.getButtonClick(PS)) {
+     setMotor(0, 0, PWM, CW, CCW);
+   }
+   else {
+     setMotor(0, 0, PWM, CW, CCW);
+     koordinat(0, 0, imunow);
+   }
+ }
 }
 
 //void FOR_Kinematic() {
