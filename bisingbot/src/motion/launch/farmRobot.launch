@@ -1,0 +1,5 @@
+<launch>
+    <node pkg = "controller" type="key" name = "keyboard" output = "screen" respawn ="true" />
+
+    <node pkg = "brain" type="farm" name = "farmRobot" respawn ="true" output = "screen"/>
+</launch>
