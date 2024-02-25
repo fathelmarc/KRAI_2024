@@ -29,8 +29,8 @@ using namespace ControlTableItem;
 #define tutup2 3540
 //#define tutup
 
-const int CWK = 29;
-const int CCWK = 27;
+const int CWK = 27;
+const int CCWK = 29;
 const int PWMK = 4;
 
 const int CWT = 25;
@@ -182,24 +182,24 @@ void switching() {
       dxl.setGoalPosition(id3, buka2);
       break;
     case DOWN:
-      if (up == 0) {
+      if (down == 0) {
         Serial.println("krunstop");
         motorK(0);
       } else {
 
         Serial.println("krunnaik");
-        motorK(30);
+        motorK(-30);
       }
       break;
     case UP:
-      if (down == 0) {
+      if (up == 0) {
 
         Serial.println("krunstop");
         motorK (0);
       } else {
 
         Serial.println("krunturun");
-        motorK(-30);
+        motorK(30);
       }
       break;
   }
