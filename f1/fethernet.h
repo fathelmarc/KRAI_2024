@@ -1,4 +1,3 @@
-
 #ifndef FETHERNET_H
 #define FETHERNET_H
 
@@ -47,7 +46,10 @@ float kRoda = M_PI*Droda;
 
 float passY,passX;
 int passT;
-int gyro,stopRight,stopLeft;
+int yaw0 = 0;
+int yaw = 0;
+int pitch =0;
+int roll = 0;
 int in[50],sens,i;
 
 #define PORT 5555
@@ -102,8 +104,6 @@ public:
             en3 = atof(terima);
         }else if(addIP == "192.168.0.68"){
             en4 = atof(terima);
-        }else if(addIP == "192.168.0.2"){
-            sonic = atoi(terima);
         }
     }
 };
@@ -127,9 +127,10 @@ void parsing(){
     for (int i = 0; i < v.size(); i++) {
         in[i] = atoi(v[i].c_str());
     }
-    stopRight = in[0];
-    stopLeft = in[1];
-    gyro = in[2];
+    yaw0 = in[0];
+    yaw = in[1];
+    pitch = in[2];
+    roll = in[3];
     // printf("%d,%d,%d\n",stopRight,stopLeft,gyro);
 }
 float toRad(float degree) {
@@ -160,7 +161,7 @@ void forKinematic(){
     float fy = cos(toRad(angleM1))*m1 + cos(toRad(angleM2))*m2 + cos(toRad(angleM3))*m3 + cos(toRad(angleM4))*m4;
     passX += fx;
     passY += fy;
-    passT = gyro;
+    passT = yaw;
     // printf("\nm1 =%f\nm2 =%f\nm3 =%f\nm4 =%f\n",roda1.en1,roda2.en2,roda3.en3,roda4.en4);
 }
 double calculateDeltaTime() {
@@ -179,6 +180,8 @@ void inKinematic(float vx, float vy, float vt, float currT){
     std::thread thread2(&Device::kirimData, &roda2, sockfd, std::to_string(v2));
     std::thread thread3(&Device::kirimData, &roda3, sockfd, std::to_string(v3));
     std::thread thread4(&Device::kirimData, &roda4, sockfd, std::to_string(v4));
+    // printf("%f,%f,%f,%f\n",v1,v2,v3,v4);
+    // printf("%f,%f,%f\n",vx,vy,vt);
     thread1.join();
     thread2.join();
     thread3.join();
@@ -223,55 +226,65 @@ void startEthernet(){
 void addData(int kasus) {
     forKinematic();
     ofstream file;
+    ifstream readFile;
     stringstream filename;
-    float prevPassX, prevPassY;
+    set<string> existingData;
+    string line;
+
     if (kasus > 0 && kasus <= 12) {
         if (kasus == 1) {
-            // printf("add to ambil1\n");
-            filename << "dataF1/ambil" << 1 << ".txt";
-        }else if(kasus == 2){
-            // printf("add to ambil2\n");
-            filename << "dataF1/ambil" << 2 << ".txt";
-        }
-         else if(kasus == 5) {
-            // printf("add to ambil3\n");
-            filename << "dataF1/ambil" << 3 << ".txt";
-        } else if(kasus == 6){
-            // printf("add to ambil4\n");
-            filename << "dataF1/ambil" << 4 << ".txt";
-        } else if(kasus == 9){
-            // printf("add to ambil5\n");
-            filename << "dataF1/ambil" << 5 << ".txt";
-        } else if(kasus == 10){
-            // printf("add to ambil6\n");
-            filename << "dataF1/ambil" << 6 << ".txt";
-        } else if(kasus == 3){
-            // printf("add to tanam1\n");
-            filename << "dataF1/tanam" << 1 << ".txt";
-        } else if(kasus == 4){
-            // printf("add to tanam2\n");
-            filename << "dataF1/tanam" << 2 << ".txt";
-        } else if(kasus == 7){
-            // printf("add to tanam3\n");
-            filename << "dataF1/tanam" << 3 << ".txt";
-        } else if(kasus == 8){
-            // printf("add to tanam4\n");
-            filename << "dataF1/tanam" << 4 << ".txt";
-        } else if(kasus == 11){
-            // printf("add to tanam5\n");
-            filename << "dataF1/tanam" << 5 << ".txt";
-        } else if(kasus == 12){
-            // printf("add to tanam6\n");
-            filename << "dataF1/tanam" << 6 << ".txt";
+            filename << "dataHornTama/ambil1.txt";
+        } else if (kasus == 2) {
+            filename << "dataHornTama/ambil2.txt";
+        } else if (kasus == 5) {
+            filename << "dataHornTama/ambil3.txt";
+        } else if (kasus == 6) {
+            filename << "dataHornTama/ambil4.txt";
+        } else if (kasus == 9) {
+            filename << "dataHornTama/ambil5.txt";
+        } else if (kasus == 10) {
+            filename << "dataHornTama/ambil6.txt";
+        } else if (kasus == 3) {
+            filename << "dataHornTama/tanam1.txt";
+        } else if (kasus == 4) {
+            filename << "dataHornTama/tanam2.txt";
+        } else if (kasus == 7) {
+            filename << "dataHornTama/tanam3.txt";
+        } else if (kasus == 8) {
+            filename << "dataHornTama/tanam4.txt";
+        } else if (kasus == 11) {
+            filename << "dataHornTama/tanam5.txt";
+        } else if (kasus == 12) {
+            filename << "dataHornTama/tanam6.txt";
         }
 
-        file.open(filename.str(), ios::app);
-        if(passX != prevPassX && passY != prevPassY){
-            file<<passX<<","<<passY<<","<<passT<<endl;
+        // Open the file for reading
+        readFile.open(filename.str());
+        if (!readFile.is_open()) {
+            cerr << "Unable to open file for reading: " << filename.str() << endl;
+            return;
         }
-        prevPassY = passY;
-        prevPassX = passX;
-        file.close();
+        
+        // Read existing data from file
+        while (getline(readFile, line)) {
+            existingData.insert(line);
+        }
+        readFile.close();
+
+        // Prepare the new data string
+        string newData = to_string(passX) + "," + to_string(passY) + "," + to_string(passT);
+
+        // Check if the new data is already in the set
+        if (existingData.find(newData) == existingData.end()) {
+            // Open the file for appending
+            file.open(filename.str(), ios::app);
+            if (!file.is_open()) {
+                cerr << "Unable to open file for writing: " << filename.str() << endl;
+                return;
+            }
+            file << newData << endl;
+            file.close();
+        }
     }
 }
 #endif // ETHERNET_H
