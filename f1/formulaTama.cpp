@@ -41,7 +41,8 @@ void adjust (float targetX,float targetY, float targetT, int adHead){
     inKinematic(targetX,targetY,velT,adHead);
 }
  
-void wait ( int seconds ) 
+
+void wait (int seconds) 
 { 
   clock_t endwait; 
   endwait = clock () + seconds * CLOCKS_PER_SEC ; 
@@ -49,6 +50,7 @@ void wait ( int seconds )
     inKinematic(0,0,0,0);
   } 
 }
+
 int main(){
     PID pid;
     startEthernet();
@@ -74,32 +76,32 @@ int main(){
             float hx = joy.axisStat[LeftHatX] *  speedChange[speed]/1000000;
             float hy = joy.axisStat[LeftHatY] * -speedChange[speed]/1000000;
             float ht = joy.axisStat[RightHatX]*  speedChangeT[speed]/1000000;
-            // if(tanjakan == 1){
-            //     adjust(hx,hy,45,passT);
-            //     atas.kirimData(sockfd, std::to_string(39));
-            // }else{
-            //     inKinematic(hx, hy, ht,passT);
-            // }
             inKinematic(hx, hy, ht,passT);
-            
         }
 
         //ballLifter
-        else if(joy.axisStat[ax_x] < 0){
-            for(int i = 0; i <3000; i++){
-                atas.kirimData(sockfd,std::to_string(78));
-                // cout<<78<<endl;
+        else if(joy.axisStat[ax_x] < 0 && tanjakkan == 2){
+            for(int i =0; i<3000;i++){
+                atas.kirimData(sockfd, std::to_string(hornLift));
             }
-        }else if(joy.axisStat[ax_x] > 0){
-            for(int i = 0;i<3000;i++){
-                atas.kirimData(sockfd,std::to_string(87));
-                // cout<<87<<endl;  
+        }else if(joy.axisStat[ax_x] > 0 && tanjakkan == 2){
+            for(int i=0; i<3000;i++){
+                atas.kirimData(sockfd, std::to_string(hornDown));
             }
         }
-        
+        // else if(joy.bStat[SQUARE] && tanjakkan == 2){
+        //     send(gripperClose, 1000);
+        //     send(lifterUp, 1000);
+        //     send(hornLift, 1000);
+        //     waitmillis(200);
+        //     send(gripperOpen, 1000);
+
+        // }else if(joy.bStat[CIRCLE] && tanjakkan == 2){
+        //     send()
+        // }
         //gripper
         else if(joy.bStat[SQUARE]){//petak
-            if(kasus!=0){
+            if(kasus!=0 && tanjakkan == 0){
                 addData(kasus);
                 kasus = 0;
             }
@@ -114,13 +116,13 @@ int main(){
                 }
             }
         }else if(joy.bStat[CIRCLE]){
-            if(kasus!=0){
+            if(kasus!=0 && tanjakkan == 0){
                 addData(kasus);
                 kasus = 0;
             }
             for (int i = 0;i<3000;i++){
                 // printf("bulat");if(prevcase % 2 ==0){
-                if(prevcase % 2 ==0 || tanjakkan == 2){
+                if(prevcase % 2 == 0 || tanjakkan == 2){
                     atas.kirimData(sockfd, std::to_string(CIRCLE));
                     // printf("buka0\n");
                 }else {
@@ -157,25 +159,25 @@ int main(){
             // pid.target(10,0,0);
             // pid.target(0,0,0);
             pid.target(4,6,0);
-            pid.target(14.095576,6.18887,0);//15.87784035	4.275307269
+            pid.target(14.52793676,6,0);//15.87784035	4.275307269
             caseBot = 0;
         }else if(caseBot == 2){
-            pid.target(16.263922,8.0204,0);//amnbil2 16.7784547019867	3.12796921456953
+            pid.target(16.37163611,8.0204,0);//amnbil2 16.7784547019867	3.12796921456953
             for(int i= 0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(R1));
             }
             wait(2);
-            pid.targetSlow(16.263922,3.883657143,0);//amnbil2 16.7784547019867	3.12796921456953
+            pid.targetSlow(17.1196269,3.883657143,0);//amnbil2 16.7784547019867	3.12796921456953
             
             caseBot =0;
         }else if(caseBot == 3){
-            pid.target(16.880636,25.091173,0);//tanam pertama
+            pid.target(17.70369229,23.36150975,0);//tanam pertama
             for(int i = 0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(R1));
             }
             caseBot = 0;
         }else if(caseBot == 4){
-            pid.target(16.771507,19.728878,0);//tanam kedua
+            pid.target(17.54996531,18.26238712,0);//tanam kedua
             for(int i =0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
             }
@@ -186,22 +188,22 @@ int main(){
             for(int i = 0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
             }
-            pid.target(26.312578,6.136726923,0);//ambil ke3
+            pid.target(26.60280122,8.136726923,0);//ambil ke3
             caseBot = 0;
         }else if(caseBot == 6){
-            pid.target(28.790043,10.5217,0);//ambil ke 4
+            pid.target(29.28384203,8.5217,0);//ambil ke 4
             for(int i = 0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(R1));
             }
             wait(2);
-            pid.targetSlow(30.5152,4.824895714,0);
+            pid.targetSlow(30.07513875,4.824895714,0);
             caseBot = 0;
         }else if(caseBot == 7){
             atas.kirimData(sockfd, std::to_string(R1));
-            pid.target(26.966503,27.849066,0);//tanam ke3
+            pid.target(30.54377183,25.6289525,0);//tanam ke3
             caseBot =0;
         }else if(caseBot == 8){
-            pid.target(27.803158,23.096573,0);//tanam  k4
+            pid.target(30.52891759,19.82531695,0);//tanam  k4
             for(int i = 0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
             }
@@ -212,27 +214,31 @@ int main(){
             for(int i =0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
             }
-            pid.target(37.739376,8.259113636,0);//ambil ke 5
+            pid.target(39.78618428,10.259113636,0);//ambil ke 5
             caseBot =0;
             
         }else if(caseBot == 10){
-            pid.target(40.192139,10.71562,0);//ambil ke 6
+            pid.target(42.92404417,10.71562,0);//ambil ke 6
             for(int i = 0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(R1));
             }
             wait(2);
-            pid.targetSlow(42.83744286,6.729197857, 0);
+            pid.targetSlow(44.97815822,6.729197857, 0);
             caseBot = 0;
         }else if(caseBot == 11){
             for(int i = 0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(R1));
-            }pid.target(37.363869,32.277534,0);//tanam ke 5
+            }pid.target(44.32172496,27.22039783,0);//tanam ke 5
             caseBot =0;
         }else if(caseBot == 12){
-            pid.target(38.563194,28.543573,0);//tanam ke 6
+            pid.target(44.26194271,22.226692,0);//tanam ke 6
             for(int i =0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
             }caseBot =0;
+        }else if(caseBot == 13){
+            pid.target(44.26194271, 8, 0);
+            pid.target(0,8,0);
+            caseBot = 0;
         }
 
         else{
