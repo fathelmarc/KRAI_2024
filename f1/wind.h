@@ -11,21 +11,6 @@ void text(sf::RenderWindow& window,float x,float y){
         cerr << "Gagal memuat font." << endl;
         return;
     }
-    //text untuk tampilkan posisi mouse
-    sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
-    sf::Text mousePositionText;
-    mousePositionText.setFont(font);
-    mousePositionText.setCharacterSize(10);
-    mousePositionText.setFillColor(sf::Color::White);
-    mousePositionText.setString("Mouse  : " + to_string((100+25-mousePosition.x)/10) + ", " + to_string((340+25-mousePosition.y)/10));
-    mousePositionText.setPosition(590, 40.f);
-    sf::Text mouseNormalPositionText;
-    mouseNormalPositionText.setFont(font);
-    mouseNormalPositionText.setCharacterSize(10);
-    mouseNormalPositionText.setFillColor(sf::Color::White);
-    mouseNormalPositionText.setString("Mouse'n: " + to_string(mousePosition.x) + ", " + to_string(mousePosition.y));
-    mouseNormalPositionText.setPosition(590, 55.f);
-
     sf::Text posisi;
     posisi.setFont(font);
     posisi.setCharacterSize(10);
@@ -44,25 +29,28 @@ void text(sf::RenderWindow& window,float x,float y){
     posisiRobot.setFont(font);
     posisiRobot.setCharacterSize(10);
     posisiRobot.setFillColor(sf::Color::White);
-    posisiRobot.setString("PosisiRobot: x = " + to_string(x/10) + ", y = " + to_string((y*-1)/10));
+    posisiRobot.setString("PosisiRobot: x = " + to_string(x) + ", y = " + to_string((y*1)));
     // Posisi teks posisi robot tetap di kiri atas
     posisiRobot.setPosition(590, 10.f);
     sf::Text hadapRobot;
     hadapRobot.setFont(font);
     hadapRobot.setCharacterSize(10);
     hadapRobot.setFillColor(sf::Color::White);
-    hadapRobot.setString("h = "+to_string(passT));
-    // Posisi teks posisi robot tetap di kiri atas
+    hadapRobot.setString("h = "+to_string(passT) + " p = " +to_string(pitch));
     hadapRobot.setPosition(590, 10.f+15);
+    sf::Text bridge;
+    bridge.setFont(font);
+    bridge.setCharacterSize(10);
+    bridge.setFillColor(sf::Color::White);
+    bridge.setString("tanjakkan = "+to_string(tanjakkan));
+    // Posisi teks posisi robot tetap di kiri atas
+    bridge.setPosition(590, 10.f+15 + 15);
     // Gambar teks lokasi robot di jendela
+    window.draw(bridge);
     window.draw(posisiRobot);
     window.draw(hadapRobot);
     window.draw(posisi);
     window.draw(prevPosisi);
-
-    // Gambar teks posisi mouse di dalam jendela
-    window.draw(mousePositionText);
-    window.draw(mouseNormalPositionText);
 }
 void lapangan(sf::RenderWindow& window){
     sf::RectangleShape startPosition(sf::Vector2f(70.f,70.f));
@@ -156,35 +144,35 @@ void lapangan(sf::RenderWindow& window){
     put12.setPosition(230+(50*5),400-222.5-10);
     put12.setFillColor(sf::Color::Red);
 
-    window.draw(seedlingPlantingZone);
+    // window.draw(seedlingPlantingZone);
     window.draw(startPosition2);
     window.draw(startPosition);
-    window.draw(seedlingRack);
-    window.draw(take1);
-    window.draw(take2);
-    window.draw(take3);
-    window.draw(take4);
-    window.draw(take5);
-    window.draw(take6);
-    window.draw(take7);
-    window.draw(take8);
-    window.draw(take9);
-    window.draw(take10);
-    window.draw(take11);
-    window.draw(take12);
+    // window.draw(seedlingRack);
+    // window.draw(take1);
+    // window.draw(take2);
+    // window.draw(take3);
+    // window.draw(take4);
+    // window.draw(take5);
+    // window.draw(take6);
+    // window.draw(take7);
+    // window.draw(take8);
+    // window.draw(take9);
+    // window.draw(take10);
+    // window.draw(take11);
+    // window.draw(take12);
 
-    window.draw(put1);
-    window.draw(put2);
-    window.draw(put3);
-    window.draw(put4);
-    window.draw(put5);
-    window.draw(put6);
-    window.draw(put7);
-    window.draw(put8);
-    window.draw(put9);
-    window.draw(put10);
-    window.draw(put11);
-    window.draw(put12);
+    // window.draw(put1);
+    // window.draw(put2);
+    // window.draw(put3);
+    // window.draw(put4);
+    // window.draw(put5);
+    // window.draw(put6);
+    // window.draw(put7);
+    // window.draw(put8);
+    // window.draw(put9);
+    // window.draw(put10);
+    // window.draw(put11);
+    // window.draw(put12);
 }
 
 void lintasan(sf::RenderWindow& window){
