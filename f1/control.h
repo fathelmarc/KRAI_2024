@@ -30,6 +30,18 @@ const int SQUARE1 = -3;
 #define hold 169
 #define startGripper 90
 
+#define ck 40
+#define co 39
+#define resetting 999
+#define startGripper 90
+#define nada 169
+const int hornLift = 378;
+const int hornDown = 387;
+#define lifterDown 312
+#define lifterUp 313
+#define gripperClose 314
+#define gripperOpen 315
+
 #define ax_y 7 //axis < 0
 // #define down 7 //axis >0
 #define ax_x  6 //axis >0
@@ -46,8 +58,14 @@ int caseBot,manual;
 int prevcase;
 int moveImu;
 static int speed;
-float speedChange[4] = {1.3,2,3,4};
-float speedChangeT[4] = {1.5,2,3,4};
+float speedChange[4] = {1.3,2,3,5};
+float speedChangeT[4] = {1.5,2,3,5};
+
+void send(int val2send, int time){
+    for(int i = 0; i <= time; i++){
+        atas.kirimData(sockfd, to_string(val2send));
+    }
+}
 
 string getKeyPress() {
     char key;
@@ -166,7 +184,7 @@ void inCaseAuto(){
     }
     if(tanjakkan >= 1 && send_gripper_ball == 0){
         for(int i = 0; i <3000; i++){
-            atas.kirimData(sockfd, std::to_string(39));
+            atas.kirimData(sockfd, std::to_string(co));
         }
         send_gripper_ball = 1;
     }
@@ -182,7 +200,6 @@ void inCaseAuto(){
         axisCont = 0;
     }else if(speed >= 4){
         speed = 3;
-
     }else if(speed <= -1){
         speed = 0;
     }
@@ -192,7 +209,7 @@ void inCaseAuto(){
     static int trianglePressed = 0;
     // Posisi
     if (joy.bStat[SILANG] && !silangPressed) {
-        if(prevcase < 13) {
+        if(prevcase < 14) {
             caseBot = prevcase + 1;
             prevcase = caseBot;
         }
@@ -212,13 +229,15 @@ void inCaseAuto(){
     if(!joy.bStat[TRIANGLE]){
         trianglePressed =0;
     }
-    if (prevcase == 13) {
-        caseBot = 12;
+    if (prevcase > 13) {
+        caseBot = 13;
         prevcase = caseBot;
     }
     if(joy.bStat[ps]){
         manual = 0;
         caseBot = 0;
+    }if(joy.bStat[share]){
+        atas.kirimData(sockfd, std::to_string(co));
     }
     if(joy.bStat[option]){
         prevcase = 0;
@@ -226,7 +245,7 @@ void inCaseAuto(){
         prevTanjakkan = 0;
         tanjakkan = 0;
         send_gripper_ball = 0;
-        atas.kirimData(sockfd, std::to_string(999));
+        atas.kirimData(sockfd, std::to_string(resetting));
     }
     int lamp[4] = {101,102,103,104};
     switch (speed)
@@ -245,6 +264,72 @@ void inCaseAuto(){
         break;
     }
     // printf("caseBot = %d\nprevCase =%d\n",caseBot,prevcase);
+}
+
+
+void addData(int kasus) {
+    forKinematic();
+    ofstream file;
+    ifstream readFile;
+    stringstream filename;
+    set<string> existingData;
+    string line;
+
+    if (kasus > 0 && kasus <= 12 && tanjakkan == 0) {
+        if (kasus == 1) {
+            filename << "dataHornTama/ambil1.txt";
+        } else if (kasus == 2) {
+            filename << "dataHornTama/ambil2.txt";
+        } else if (kasus == 5) {
+            filename << "dataHornTama/ambil3.txt";
+        } else if (kasus == 6) {
+            filename << "dataHornTama/ambil4.txt";
+        } else if (kasus == 9) {
+            filename << "dataHornTama/ambil5.txt";
+        } else if (kasus == 10) {
+            filename << "dataHornTama/ambil6.txt";
+        } else if (kasus == 3) {
+            filename << "dataHornTama/tanam1.txt";
+        } else if (kasus == 4) {
+            filename << "dataHornTama/tanam2.txt";
+        } else if (kasus == 7) {
+            filename << "dataHornTama/tanam3.txt";
+        } else if (kasus == 8) {
+            filename << "dataHornTama/tanam4.txt";
+        } else if (kasus == 11) {
+            filename << "dataHornTama/tanam5.txt";
+        } else if (kasus == 12) {
+            filename << "dataHornTama/tanam6.txt";
+        }
+
+        // Open the file for reading
+        readFile.open(filename.str());
+        if (!readFile.is_open()) {
+            cerr << "Unable to open file for reading: " << filename.str() << endl;
+            return;
+        }
+        
+        // Read existing data from file
+        while (getline(readFile, line)) {
+            existingData.insert(line);
+        }
+        readFile.close();
+
+        // Prepare the new data string
+        string newData = to_string(passX) + "," + to_string(passY) + "," + to_string(passT);
+
+        // Check if the new data is already in the set
+        if (existingData.find(newData) == existingData.end()) {
+            // Open the file for appending
+            file.open(filename.str(), ios::app);
+            if (!file.is_open()) {
+                cerr << "Unable to open file for writing: " << filename.str() << endl;
+                return;
+            }
+            file << newData << endl;
+            file.close();
+        }
+    }
 }
 // void tanjakkan(){
 //     if(tanjakkan ==1){
