@@ -27,7 +27,12 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <iostream>
+#include <chrono>
+#include <thread>
+
 using namespace std;
+using namespace std::chrono;
 
 #define R_robot 0.2585
 #define R_roda 0.05
@@ -180,7 +185,7 @@ void inKinematic(float vx, float vy, float vt, float currT){
     std::thread thread2(&Device::kirimData, &roda2, sockfd, std::to_string(v2));
     std::thread thread3(&Device::kirimData, &roda3, sockfd, std::to_string(v3));
     std::thread thread4(&Device::kirimData, &roda4, sockfd, std::to_string(v4));
-    // printf("%f,%f,%f,%f\n",v1,v2,v3,v4);
+    printf("%f,%f,%f,%f\n",v1,v2,v3,v4);
     // printf("%f,%f,%f\n",vx,vy,vt);
     thread1.join();
     thread2.join();
@@ -222,69 +227,12 @@ void startEthernet(){
         exit(EXIT_FAILURE);
     }
 }
-
-void addData(int kasus) {
-    forKinematic();
-    ofstream file;
-    ifstream readFile;
-    stringstream filename;
-    set<string> existingData;
-    string line;
-
-    if (kasus > 0 && kasus <= 12) {
-        if (kasus == 1) {
-            filename << "dataHornTama/ambil1.txt";
-        } else if (kasus == 2) {
-            filename << "dataHornTama/ambil2.txt";
-        } else if (kasus == 5) {
-            filename << "dataHornTama/ambil3.txt";
-        } else if (kasus == 6) {
-            filename << "dataHornTama/ambil4.txt";
-        } else if (kasus == 9) {
-            filename << "dataHornTama/ambil5.txt";
-        } else if (kasus == 10) {
-            filename << "dataHornTama/ambil6.txt";
-        } else if (kasus == 3) {
-            filename << "dataHornTama/tanam1.txt";
-        } else if (kasus == 4) {
-            filename << "dataHornTama/tanam2.txt";
-        } else if (kasus == 7) {
-            filename << "dataHornTama/tanam3.txt";
-        } else if (kasus == 8) {
-            filename << "dataHornTama/tanam4.txt";
-        } else if (kasus == 11) {
-            filename << "dataHornTama/tanam5.txt";
-        } else if (kasus == 12) {
-            filename << "dataHornTama/tanam6.txt";
-        }
-
-        // Open the file for reading
-        readFile.open(filename.str());
-        if (!readFile.is_open()) {
-            cerr << "Unable to open file for reading: " << filename.str() << endl;
-            return;
-        }
+void waitmillis(int milliseconds) {
+    auto endwait = steady_clock::now() + chrono::milliseconds(milliseconds);
+    while (steady_clock::now() < endwait) {
+        inKinematic(0, 0, 0, 0);
+        this_thread::sleep_for(chrono::milliseconds(1)); // Tidur selama 1 milidetik untuk mengurangi penggunaan CPU
         
-        // Read existing data from file
-        while (getline(readFile, line)) {
-            existingData.insert(line);
-        }
-        readFile.close();
-
-        // Prepare the new data string
-        string newData = to_string(passX) + "," + to_string(passY) + "," + to_string(passT);
-
-        // Check if the new data is already in the set
-        if (existingData.find(newData) == existingData.end()) {
-            // Open the file for appending
-            file.open(filename.str(), ios::app);
-            if (!file.is_open()) {
-                cerr << "Unable to open file for writing: " << filename.str() << endl;
-                return;
-            }
-            file << newData << endl;
-            file.close();
-        }
     }
 }
 #endif // ETHERNET_H
