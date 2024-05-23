@@ -1,4 +1,3 @@
-
 #ifndef FETHERNET_H
 #define FETHERNET_H
 
@@ -28,7 +27,12 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <iostream>
+#include <chrono>
+#include <thread>
+
 using namespace std;
+using namespace std::chrono;
 
 #define R_robot 0.2585
 #define R_roda 0.05
@@ -47,7 +51,10 @@ float kRoda = M_PI*Droda;
 
 float passY,passX;
 int passT;
-int gyro,stopRight,stopLeft;
+int yaw0 = 0;
+int yaw = 0;
+int pitch =0;
+int roll = 0;
 int in[50],sens,i;
 
 #define PORT 5555
@@ -102,18 +109,88 @@ public:
             en3 = atof(terima);
         }else if(addIP == "192.168.0.68"){
             en4 = atof(terima);
-        }else if(addIP == "192.168.0.2"){
-            sonic = atoi(terima);
         }
     }
 };
 
+string str;
 Device atas("192.168.0.70",8888);
 Device roda1("192.168.0.67",5555);
 Device roda2("192.168.0.66",5555);
 Device roda3("192.168.0.69",5555);
 Device roda4("192.168.0.68",5555);
 
+void parsing(){
+    atas.terimaData(sockfd);
+    str = atas.meg;
+    string s;
+    stringstream ss(str);
+    vector<string> v;
+    while (getline(ss, s, ',')) {
+        v.push_back(s);
+    }
+    for (int i = 0; i < v.size(); i++) {
+        in[i] = atoi(v[i].c_str());
+    }
+    yaw0 = in[0];
+    yaw = in[1];
+    pitch = in[2];
+    roll = in[3];
+    // printf("%d,%d,%d\n",stopRight,stopLeft,gyro);
+}
+float toRad(float degree) {
+  return degree * M_PI / 180;
+}
+
+//1 = 69 | new 1 = 67
+//2 = 68 | new 2 = 66
+//3 = 67 | new 3 = 69
+//4 = 66 | new 4 = 68
+void forKinematic(){
+    parsing();
+    roda1.terimaData(sockfd);
+    roda2.terimaData(sockfd);
+    roda3.terimaData(sockfd);
+    roda4.terimaData(sockfd);
+    double m1= ((roda1.en1-roda1.enprev1)*kRoda/PPR)/4;
+    double m2= ((roda2.en2-roda2.enprev2)*kRoda/PPR)/4;
+    double m3= ((roda3.en3-roda3.enprev3)*kRoda/PPR)/4;
+    double m4= ((roda4.en4-roda4.enprev4)*kRoda/PPR)/4;
+
+    roda1.enprev1 = roda1.en1;
+    roda2.enprev2 = roda2.en2;
+    roda3.enprev3 = roda3.en3;
+    roda4.enprev4 = roda4.en4;
+
+    float fx = sin(toRad(angleM1))*m1 + sin(toRad(angleM2))*m2 + sin(toRad(angleM3))*m3 + sin(toRad(angleM4))*m4;
+    float fy = cos(toRad(angleM1))*m1 + cos(toRad(angleM2))*m2 + cos(toRad(angleM3))*m3 + cos(toRad(angleM4))*m4;
+    passX += fx;
+    passY += fy;
+    passT = yaw;
+    // printf("\nm1 =%f\nm2 =%f\nm3 =%f\nm4 =%f\n",roda1.en1,roda2.en2,roda3.en3,roda4.en4);
+}
+double calculateDeltaTime() {
+    static auto start = std::chrono::steady_clock::now();
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> delta = end - start;
+    return delta.count(); // Mengembalikan delta time dalam detik
+}
+
+void inKinematic(float vx, float vy, float vt, float currT){
+    float v1 = ((sin(toRad(angleM1 + currT)) * vx) + (cos(toRad(angleM1 + currT)) * vy) + (vt * R_robot))/R_roda;
+    float v2 = ((sin(toRad(angleM2 + currT)) * vx) + (cos(toRad(angleM2 + currT)) * vy) + (vt * R_robot))/R_roda;
+    float v3 = ((sin(toRad(angleM3 + currT)) * vx) + (cos(toRad(angleM3 + currT)) * vy) + (vt * R_robot))/R_roda;
+    float v4 = ((sin(toRad(angleM4 + currT)) * vx) + (cos(toRad(angleM4 + currT)) * vy) + (vt * R_robot))/R_roda;
+    std::thread thread1(&Device::kirimData, &roda1, sockfd, std::to_string(v1));
+    std::thread thread2(&Device::kirimData, &roda2, sockfd, std::to_string(v2));
+    std::thread thread3(&Device::kirimData, &roda3, sockfd, std::to_string(v3));
+    std::thread thread4(&Device::kirimData, &roda4, sockfd, std::to_string(v4));
+    // printf("%f,%f,%f,%f\n%f,%f,%f\n",v1,v2,v3,v4,vx,vy,vt);
+    thread1.join();
+    thread2.join();
+    thread3.join();
+    thread4.join();
+}
 double kalman(double U);
 double kalman(double U){
     //kalman function def
@@ -147,6 +224,14 @@ void startEthernet(){
     if ( bind(sockfd, (const struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0 ){
         perror("bind failed");
         exit(EXIT_FAILURE);
+    }
+}
+void waitmillis(int milliseconds) {
+    auto endwait = steady_clock::now() + chrono::milliseconds(milliseconds);
+    while (steady_clock::now() < endwait) {
+        inKinematic(0, 0, 0, 0);
+        this_thread::sleep_for(chrono::milliseconds(1)); // Tidur selama 1 milidetik untuk mengurangi penggunaan CPU
+        
     }
 }
 #endif // ETHERNET_H
