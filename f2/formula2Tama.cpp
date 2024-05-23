@@ -98,6 +98,7 @@ int main(){
             float hx = joy.axisStat[LeftHatX] *  speedChange[speed]/1000000;
             float hy = joy.axisStat[LeftHatY] * -speedChange[speed]/1000000;
             float ht = joy.axisStat[RightHatX]*  speedChangeT[speed]/1000000;
+            atas.kirimData(sockfd,std::to_string(hold));
             inKinematic(hx,hy,ht,yaw);
         }
 
@@ -162,14 +163,12 @@ int main(){
         //case 14 (naik) titk x = -9
         //position
         else if(caseBot == 1){
-            for(int i =0; i<1000;i++){
+            for(int i = 0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
+            }
+            for(int i =0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(startGripper));
             }
-            // pid.target(0,10,0);
-            // pid.target(10,10,0);
-            // pid.target(10,0,45);
-            // pid.target(0,0,45);
             pid.target(4,6,0);
             pid.target(ambil1[0],6,0);//15.87784035	4.275307269
             std::cout<<ambil1[0]<<","<<ambil1[1]<<"ambil1"<<std::endl;
@@ -194,7 +193,6 @@ int main(){
             for(int i =0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1hard));
             }
-
             std::cout<<tanam2[0]<<","<<tanam2[1]<<"tanam2"<<std::endl;
             pid.target(tanam2[0],tanam2[1],0);//tanam kedua
             caseBot = 0;
@@ -204,7 +202,6 @@ int main(){
             for(int i = 0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
             }
-
             std::cout<<ambil3[0]<<","<<ambil3[1]<<"ambil3"<<std::endl;
             pid.target(ambil3[0],8.136726923,0);//ambil ke3
             caseBot = 0;
@@ -238,7 +235,6 @@ int main(){
                 atas.kirimData(sockfd, std::to_string(L1));
             }
             pid.target(ambil5[0],ambil5[1]+2,0);//ambil ke 5
-
             std::cout<<ambil5[0]<<","<<ambil5[1]<<"ambil5"<<std::endl;
             caseBot =0;
             
