@@ -2,98 +2,118 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <unistd.h>  // For read, STDIN_FILENO
-#include <termios.h> // For tcgetattr, tcsetattr
+#include <deque>
+
+#include <unistd.h>
+#include <termios.h>
 
 using namespace std;
 
-// Function to compute the averages of x, y, and t from the file
-bool computeAverages(const string& filename, float& avgX, float& avgY, int& avgT) {
-    ifstream inputFile(filename);
+const size_t MAX_ENTRIES = 132; // Maximum number of entries to consider
 
-    if (!inputFile) {
-        cerr << "Error opening file: " << filename << endl;
-        return false; // Indicate failure to open the file
+// Function to process each line and add it to the buffer
+void processLine(const string& line, deque<vector<float>>& buffer) {
+    stringstream lineStream(line);
+    string cell;
+    vector<float> values;
+
+    // Split the line by commas and convert to float
+    while (getline(lineStream, cell, ',')) {
+        values.push_back(stof(cell));
+    }
+
+    // Add the new values to the buffer
+    if (values.size() >= 3) {
+        if (buffer.size() >= MAX_ENTRIES) {
+            buffer.pop_front(); // Remove the oldest entry
+        }
+        buffer.push_back(values); // Add the newest entry
+    }
+}
+
+// Function to get a key press
+string getKeyPress() {
+    char key;
+    struct termios oldt, newt;
+
+    // Save current terminal settings
+    tcgetattr(STDIN_FILENO, &oldt);
+
+    // Set terminal to non-canonical mode (no buffering)
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+    // Read a single character
+    read(STDIN_FILENO, &key, 1);
+
+    // Restore terminal settings
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+
+    return string(1, key);
+}
+
+// Function to compute and print the averages
+void computeAndPrintAverages(const deque<vector<float>>& buffer) {
+    if (buffer.empty()) {
+        cout << "No data to process." << endl;
+        return;
     }
 
     float sumX = 0.0;
     float sumY = 0.0;
     int sumT = 0;
-    int count = 0;
+    int count = buffer.size();
+
+    for (const auto& values : buffer) {
+        sumX += values[0];
+        sumY += values[1];
+        sumT += static_cast<int>(values[2]);
+    }
+
+    float avgX = sumX / count;
+    float avgY = sumY / count;
+    int avgT = sumT / count; // Integer division
+
+    cout << "Average x: " << avgX << endl;
+    cout << "Average y: " << avgY << endl;
+    cout << "Average t: " << avgT << endl;
+}
+
+// Function to read the file and update the buffer
+void updateBuffer(const string& filename, deque<vector<float>>& buffer) {
+    ifstream inputFile(filename);
+
+    if (!inputFile) {
+        cerr << "Error opening file: " << filename << endl;
+        return;
+    }
+
     string line;
-
     while (getline(inputFile, line)) {
-        stringstream lineStream(line);
-        string cell;
-        vector<float> values;
-
-        // Split the line by commas and convert to float
-        while (getline(lineStream, cell, ',')) {
-            values.push_back(stof(cell));
-        }
-
-        // Accumulate the sums for each column
-        if (values.size() >= 3) {
-            sumX += values[0];
-            sumY += values[1];
-            sumT += static_cast<int>(values[2]);
-            count++;
-        }
+        processLine(line, buffer);
     }
 
     inputFile.close();
-
-    if (count > 0) {
-        avgX = sumX / count;
-        avgY = sumY / count;
-        avgT = sumT / count; // Integer division
-        return true; // Indicate success
-    } else {
-        cerr << "No data to process." << endl;
-        return false; // Indicate failure due to no data
-    }
-}
-
-// Example function to set terminal to raw mode (for custom key handling)
-void setRawMode(struct termios& oldt) {
-    struct termios newt;
-    tcgetattr(STDIN_FILENO, &oldt); // Save current terminal settings
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO); // Disable canonical mode and echo
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt); // Apply new terminal settings
-}
-
-// Example function to restore terminal settings
-void resetTerminalMode(const struct termios& oldt) {
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt); // Restore old terminal settings
 }
 
 int main() {
-    string filename = "numbers.csv"; // Change to the name of your file
-    float avgX, avgY;
-    int avgT;
+    string filename = "numbers.txt"; // Change to the name of your file
+    deque<vector<float>> buffer;
 
-    if (computeAverages(filename, avgX, avgY, avgT)) {
-        cout << "Average x: " << avgX << endl;
-        cout << "Average y: " << avgY << endl;
-        cout << "Average t: " << avgT << endl;
+    // Initial load of the file into the buffer
+    updateBuffer(filename, buffer);
 
-        // Example usage of raw mode for custom key handling
-        struct termios oldt;
-        setRawMode(oldt);
+    cout << "Press '1' to compute averages or 'q' to quit..." << endl;
 
-        char key;
-        cout << "Press any key to continue..." << endl;
-        read(STDIN_FILENO, &key, 1); // Read one character from stdin
+    while (true) {
+        string key = getKeyPress();
 
-        resetTerminalMode(oldt);
-        cout << "You pressed: " << key << endl;
-
-        // Integrate the averages into your robot's movement logic here
-        // For example:
-        // moveRobot(avgX, avgY, avgT);
-    } else {
-        cerr << "Failed to compute averages." << endl;
+        if (key == "1") {
+            computeAndPrintAverages(buffer);
+        } else if (key == "q") {
+            break;
+        }
     }
 
     return 0;
