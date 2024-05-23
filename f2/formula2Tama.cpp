@@ -3,10 +3,8 @@
 #include "thread"
 #include "fethernet.h"
 #include "control.h"
-#include "wind.h"
-#include "motion.h"
-#include "pidController.h"
-
+// #include "wind.h"
+#include "pid.h"
 float kp =0.016;//0.0465;//0.4;//mulus(0.13);//3.06;//1.08;//1.8;//0.51;//0.85;//0.36
 float ki =0;//0.00003;//.03;//0;//.03;//.013;//mulus(0);//.017;//0.0372;//0;//0.102;//0;
 float kd =0.0000000001;//0.003;//.00396;//0.00396;//.00186;//mulus(0);//.01317;//6.83;//0;//0.6375;//0;
@@ -15,7 +13,6 @@ float kpt =0.013;//0.0123;//0.06;
 float kit =0;//0.000000000001;//.005;//0.0062;
 float kdt =0;//0;//.02;//0.0016;
 
-// double deltaTime = calculateDeltaTime();
 float pidT(float targetT,float currT){
     forKinematic();
     float errprevT;
@@ -38,70 +35,58 @@ float pidT(float targetT,float currT){
     return lt ;
     // printf("e= %f\n",errT);
 }
+
+PID pid;
 void adjust (float targetX,float targetY, float targetT, int adHead){
     forKinematic();
-    float velT = pidT(targetT,passT);
+    float err = targetT - yaw;
+    if (err > 180) {
+        err -= 360;
+    } else if (err < -180) {
+        err += 360;
+    }
+    float velT = pid.calculatePID(err,0.3,1);
     inKinematic(targetX,targetY,velT,adHead);
 }
-void go_to(float TargetX,float TargetY,float TargetH)
-{   
-    while(1){
-        parameter(0.037,0.000032,0.0000000000001);//0.000032,0);
-        inCaseAuto();
-        displayPosition(window,trail,passX, passY);
-        float errorX = TargetX-passX;
-        float errorY = TargetY-passY;
-        float errorH = TargetH-passT;
+ 
 
-        float errorXY = sqrt(errorX*errorX+errorY*errorY);
-
-        float errorT = atan2(errorX,errorY);
-
-        float kontrol_sbXY = calculatePID(errorXY,2);
-        float kontrolT = calculatePID(errorH, 2);
-
-        float velocityX = kontrol_sbXY*sin(errorT);
-        float velocityY = kontrol_sbXY*cos(errorT);
-        float velocityH = kontrolT;
-        inKinematic(velocityX,velocityY,velocityH,passT);
-        // printf("%f\n", velocityY);
-        if(errorX < 1 && errorY < 1 && errorX > -1 && errorY > -1 || caseBot == 0){
-            break;
-        }
-    }
+void wait (int seconds) 
+{ 
+  clock_t endwait;
+  endwait = clock () + seconds * CLOCKS_PER_SEC ; 
+  while (clock() < endwait) {
+    inKinematic(0,0,0,0);
+  } 
 }
-void just_go(float TargetX,float TargetY,float TargetH)
-{
-    
-    parameter(0.037,0.000032,0.0000000000001);//0.000032,0);
-    inCaseAuto();
-    displayPosition(window,trail,passX, passY);
-    float errorX = TargetX-passX;
-    float errorY = TargetY-passY;
-    float errorH = TargetH-passT;
 
-    float errorXY = sqrt(errorX*errorX+errorY*errorY);
-
-    float errorT = atan2(errorX,errorY);
-
-    float kontrol_sbXY = calculatePID(errorXY,2);
-    float kontrolT = calculatePID(errorH, 1);
-
-    float velocityX = kontrol_sbXY*sin(errorT);
-    float velocityY = kontrol_sbXY*cos(errorT);
-    float velocityH = kontrolT;
-    inKinematic(velocityX,velocityY,velocityH,passT);
-    // printf("%f\n", velocityY);
-}
 int main(){
+    
     startEthernet();
     // plt::ion(); // Aktifkan mode interaktif matplotlib
+    // pid.parameter(0.032,0,0);
+    pid.parameter(0.03,0,0.000001);
+    pid.parameterT(0.01,0,0);
+    vector<double> ambil1 = computeAverages("dataF2/ambil1.txt");
+    vector<double> ambil2 = computeAverages("dataF2/ambil2.txt");
+    vector<double> ambil3 = computeAverages("dataF2/ambil3.txt");
+    vector<double> ambil4 = computeAverages("dataF2/ambil4.txt");
+    vector<double> ambil5 = computeAverages("dataF2/ambil5.txt");
+    vector<double> ambil6 = computeAverages("dataF2/ambil6.txt");
+
+
+    vector<double> tanam1 = computeAverages("dataF2/tanam1.txt");
+    vector<double> tanam2 = computeAverages("dataF2/tanam2.txt");
+    vector<double> tanam3 = computeAverages("dataF2/tanam3.txt");
+    vector<double> tanam4 = computeAverages("dataF2/tanam4.txt");
+    vector<double> tanam5 = computeAverages("dataF2/tanam5.txt");
+    vector<double> tanam6 = computeAverages("dataF2/tanam6.txt");
     if (!joy.connected) {
         printf("joy tidak terhubung\n");
         return 1;
     }
     printf("start robot\n");
-    while(window.isOpen()){
+    while(1){
+        // pid.parameter(0.032,0.000035,0.0000000000000);
         std::thread eventThread(check, std::ref(window));
         eventThread.join();
         inCaseAuto();
@@ -113,61 +98,56 @@ int main(){
             float hx = joy.axisStat[LeftHatX] *  speedChange[speed]/1000000;
             float hy = joy.axisStat[LeftHatY] * -speedChange[speed]/1000000;
             float ht = joy.axisStat[RightHatX]*  speedChangeT[speed]/1000000;
-            if (moveImu == 0){
-                inKinematic(hx, hy, ht,passT);}
-            else if(moveImu == 1){
-                adjust(hx, hy, 0, passT);
+            inKinematic(hx,hy,ht,yaw);
+        }
+
+        //ballLifter
+        else if(joy.axisStat[ax_x] < 0 && tanjakkan == 2){
+            for(int i =0; i<3000;i++){
+                atas.kirimData(sockfd, std::to_string(hornLift));
+            }
+        }else if(joy.axisStat[ax_x] > 0 && tanjakkan == 2){
+            for(int i=0; i<3000;i++){
+                atas.kirimData(sockfd, std::to_string(hornDown));
             }
         }
-        
         //gripper
-
         else if(joy.bStat[SQUARE]){//petak
-            if(kasus!=0){
+            if(kasus!=0 && tanjakkan == 0){
                 addData(kasus);
                 kasus = 0;
             }
             for (int i = 0;i<3000;i++){
                 // printf("petak");
-                atas.kirimData(sockfd, std::to_string(SQUARE));
+                if(prevcase % 2 ==0 || tanjakkan == 2){
+                    atas.kirimData(sockfd, std::to_string(SQUARE));
+                    // printf("tutup0\n");
+                }else {
+                    atas.kirimData(sockfd, std::to_string(SQUARE1));
+                    // printf("tutup1\n");
+                }
             }
         }else if(joy.bStat[CIRCLE]){
-
-            if(kasus!=0){
+            if(kasus!=0 && tanjakkan == 0){
                 addData(kasus);
                 kasus = 0;
             }
             for (int i = 0;i<3000;i++){
-                // printf("bulat");
-                atas.kirimData(sockfd, std::to_string(CIRCLE));
-			}
-        }
-        //gripper
-        else if(joy.axisStat[6] < 0){//petak
-
-            if(kasus!=0){
-                addData(kasus);
-                kasus = 0;
+                // printf("bulat");if(prevcase % 2 ==0){
+                if(prevcase % 2 == 0 || tanjakkan == 2){
+                    atas.kirimData(sockfd, std::to_string(CIRCLE));
+                    // printf("buka0\n");
+                }else {
+                    atas.kirimData(sockfd, std::to_string(CIRCLE1));
+                    // printf("buka1\n");
+                }
             }
-            for (int i = 0;i<3000;i++){
-                // printf("petak");
-                atas.kirimData(sockfd, std::to_string(SQUARE1));
-            }
-        }else if(joy.axisStat[6] > 0){
-
-            if(kasus!=0){
-                addData(kasus);
-                kasus = 0;
-            }
-            for (int i = 0;i<3000;i++){
-                // printf("bulat");
-                atas.kirimData(sockfd, std::to_string(CIRCLE1));
-			}
         }
         //putar
         else if(joy.bStat[L1]){//l1
             for(int i =0; i<1000; i++){
                 atas.kirimData(sockfd, std::to_string(L1));
+                
             }
         }		
 		else if(joy.bStat[R1]){//r1
@@ -175,49 +155,48 @@ int main(){
                 atas.kirimData(sockfd, std::to_string(R1));
             }
         }
-        else if(joy.bStat[8]){
-            just_go(0,0,0);
-        }
-
+        //case 13 titik y = 14 +-
+        //case 13 titik x = 0
+        // sambil 45
+        //case 14 (naik) titik y = 45
+        //case 14 (naik) titk x = -9
         //position
         else if(caseBot == 1){
             for(int i =0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
-                atas.kirimData(sockfd, std::to_string(90));
+                atas.kirimData(sockfd, std::to_string(startGripper));
             }
-            go_to(0,6,0);
-            go_to(14.4615434782609,6.06739,0);
-            // go_to(0,100,0);
-            // setPos(0,15+5,0);
-            // setPos(15+5,15,0);
-            // setPos(15,10+5,0);
-            // setPos(0+5,0+5,0);
-            // setPos(1.5,5.0,0);
-            // go_to(0,20,0);//ambil pertama 14.47	3.09
-            // go_to(20, 20,0);
-            // go_to(20,0,0);
-            // go_to(0,0,0);
-            // go_to(0, 3+5,0);
-            // go_to(15+5,3,0);
-
+            // pid.target(0,10,0);
+            // pid.target(10,10,0);
+            // pid.target(10,0,45);
+            // pid.target(0,0,45);
+            pid.target(4,6,0);
+            pid.target(ambil1[0],6,0);//15.87784035	4.275307269
+            std::cout<<ambil1[0]<<","<<ambil1[1]<<"ambil1"<<std::endl;
             caseBot = 0;
         }else if(caseBot == 2){
-            go_to(18.2958588235294,6.17013,0);//amnbil2 16.7784547019867	3.12796921456953
+            pid.target(ambil2[0],ambil2[1]+5,0);//amnbil2 16.7784547019867	3.12796921456953
             for(int i= 0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(R1));
             }
+            wait(1);
+            pid.targetSlow(ambil2[0],ambil2[1]+3,0);//amnbil2 16.7784547019867	3.12796921456953
+            std::cout<<ambil2[0]<<","<<ambil2[1]<<"ambil2"<<std::endl;
             caseBot =0;
         }else if(caseBot == 3){
-            go_to(20.9084764705882,26.8165882352941,0);//tanam pertama
             for(int i = 0; i<1000;i++){
-                atas.kirimData(sockfd, std::to_string(R1));
+                atas.kirimData(sockfd, std::to_string(R1hard));
             }
+            std::cout<<tanam1[0]<<"."<<tanam1[1]<<"tanam1"<<std::endl;
+            pid.target(tanam1[0],tanam1[1],0);//tanam pertama
             caseBot = 0;
         }else if(caseBot == 4){
-            go_to(19.9105733333333,20.63714,0);//tanam kedua
             for(int i =0; i<1000;i++){
-                atas.kirimData(sockfd, std::to_string(L1));
+                atas.kirimData(sockfd, std::to_string(L1hard));
             }
+
+            std::cout<<tanam2[0]<<","<<tanam2[1]<<"tanam2"<<std::endl;
+            pid.target(tanam2[0],tanam2[1],0);//tanam kedua
             caseBot = 0;
         }
 
@@ -225,22 +204,32 @@ int main(){
             for(int i = 0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
             }
-            go_to(28.08299375,6.38343,0);//ambil ke3
+
+            std::cout<<ambil3[0]<<","<<ambil3[1]<<"ambil3"<<std::endl;
+            pid.target(ambil3[0],8.136726923,0);//ambil ke3
             caseBot = 0;
         }else if(caseBot == 6){
-            go_to(30.4399285714286,6.59225,1);//ambil ke 4
+            pid.target(ambil4[0],10.5217,0);//ambil ke 4
             for(int i = 0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(R1));
-            }caseBot = 0;
+            }
+            std::cout<<ambil4[0]<<","<<ambil4[1]<<"ambil4"<<std::endl;
+            wait(1);
+            pid.targetSlow(ambil4[0],ambil4[1]+2,0);
+            caseBot = 0;
         }else if(caseBot == 7){
-            atas.kirimData(sockfd, std::to_string(R1));
-            go_to(33.2912826086957,27.373547826087,0);//tanam ke3
+            for(int i = 0;i<3000;i++){
+                atas.kirimData(sockfd, std::to_string(R1hard));
+            }
+            pid.target(tanam3[0],tanam3[1],0);//tanam ke3
+            std::cout<<tanam3[0]<<","<<tanam3[1]<<"tanam3"<<std::endl;
             caseBot =0;
         }else if(caseBot == 8){
-            go_to(32.22004375,21.34726875,0);//tanam  k4
             for(int i = 0;i<1000;i++){
-                atas.kirimData(sockfd, std::to_string(L1));
+                atas.kirimData(sockfd, std::to_string(L1hard));
             }
+            pid.target(tanam4[0],tanam4[1],0);//tanam  k4
+            std::cout<<tanam4[0]<<","<<tanam4[1]<<"tanam4"<<std::endl;
             caseBot =0;
         }
 
@@ -248,30 +237,44 @@ int main(){
             for(int i =0;i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(L1));
             }
-            go_to(40.5068875,6.05465,1);//ambil ke 5
+            pid.target(ambil5[0],ambil5[1]+2,0);//ambil ke 5
+
+            std::cout<<ambil5[0]<<","<<ambil5[1]<<"ambil5"<<std::endl;
             caseBot =0;
             
         }else if(caseBot == 10){
-            go_to(43.2599142857143,6.60778,0);//ambil ke 6
+            pid.target(ambil6[0],ambil6[1]+5,0);//ambil ke 6
             for(int i = 0; i<1000;i++){
                 atas.kirimData(sockfd, std::to_string(R1));
             }
+            wait(1);
+            pid.targetSlow(ambil6[0],ambil6[1]+2, 0);
+            std::cout<<ambil6[0]<<","<<ambil6[1]<<"ambil6"<<std::endl;
             caseBot = 0;
         }else if(caseBot == 11){
             for(int i = 0; i<1000;i++){
-                atas.kirimData(sockfd, std::to_string(R1));
-            }go_to(47.0347375,28.8019791666667,2);//tanam ke 5
+                atas.kirimData(sockfd, std::to_string(R1hard));
+            }
+            pid.target(tanam5[0],tanam5[1],0);//tanam ke 5
+
+            std::cout<<tanam5[0]<<","<<tanam5[1]<<"tanam5"<<std::endl;
             caseBot =0;
         }else if(caseBot == 12){
-            go_to(45.4556058823529,22.1591823529412,0);//tanam ke 6
             for(int i =0;i<1000;i++){
-                atas.kirimData(sockfd, std::to_string(L1));
-            }caseBot =0;
+                atas.kirimData(sockfd, std::to_string(L1hard));
+            }
+            pid.target(tanam6[0],tanam6[1],0);//tanam ke 6
+            std::cout<<tanam6[0]<<","<<tanam6[1]<<"tanam6"<<std::endl;
+            caseBot =0;
+        }else if(caseBot == 13){
+            pid.target(44.26194271, 8, 0);
+            pid.target(0,8,0);
+            caseBot = 0;
         }
-
+            
         else{
-            atas.kirimData(sockfd,std::to_string(hold));
-            inKinematic(0,0,0,passT);
+            atas.kirimData(sockfd, std::to_string(hold)); 
+            inKinematic(0,0,0,yaw);
         }
         fflush(stdout);
         usleep(16000);
