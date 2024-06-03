@@ -39,8 +39,19 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  encSend();
-  float pwmVal = PWMReceive();
-  setMotor(pwmVal);
+  switch (Ethernet.linkStatus()) {
+    case LinkON:
+      Serial.println("Ethernet link status: LINK ON");
+      encSend();
+      float pwmVal = PWMReceive();
+      setMotor(pwmVal);
+      break;
+    case LinkOFF:
+      Serial.println("Ethernet link status: LINK OFF");
+      setMotor(0);
+      break;
+    default:
+      Serial.println("Ethernet link status: UNKNOWN");
+      break;
+  }
 }
