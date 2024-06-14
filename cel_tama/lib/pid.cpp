@@ -1,5 +1,7 @@
 #include "pid.h"
-
+struct param{
+    float kp,ki,kd;
+}
 void PID::parameter(float kp_, float ki_, float kd_){
     kp = kp_;
     ki = ki_;
