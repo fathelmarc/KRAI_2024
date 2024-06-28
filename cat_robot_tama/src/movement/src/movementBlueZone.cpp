@@ -34,7 +34,7 @@ void joystickThread(Joystick* joystick) {
 #define launchBall 64
 #define offLaunch 46
 int main(int argc, char** argv){
-    ros::init (argc, argv, "movement");
+    ros::init (argc, argv, "movementBlueZone");
     ros::NodeHandle nh; 
     // ros::Subscriber subMon = nh.subscribe("speedMonitoring", 1000, &callbackMonitoring);
     ros::Subscriber subRP = nh.subscribe("rollPitch", 1000,&callbackRollPitch);
