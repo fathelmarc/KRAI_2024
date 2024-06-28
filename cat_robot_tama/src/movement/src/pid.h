@@ -9,6 +9,8 @@ private:
     double eDerivative;
     double eProportional;
     float u;
+    float uT;
+    float output;
     float kpT = 0;
     float kiT = 0;
     float kdT = 0;
@@ -22,9 +24,6 @@ public:
     double delta();
     float calculatePID(float error, float limit,bool condition);
 };
-
-#include "pid.h"
-
 void PID::parameter(float kp_, float ki_, float kd_){
     kp = kp_;
     ki = ki_;
@@ -59,8 +58,9 @@ float PID::calculatePID(float error, float limit,bool condition){
     eDerivative = (eProportional - prevError)/deltaT;
     prevError = eProportional;
     u = kp*eProportional + ki*eIntegral + kd*eDerivative;
-    float uT = kpT * eProportional + kiT * eIntegral + kdT * eDerivative;
-    float output = condition ? uT : u;
+    uT = kpT * eProportional + kiT * eIntegral + kdT * eDerivative;
+    output = condition ? uT : u;
+    // printf("\nkonstanta:%f,%f,%f\n", kp,ki,kd);
     return std::fmax(-limit, std::fmin(output, limit));
 }
 
