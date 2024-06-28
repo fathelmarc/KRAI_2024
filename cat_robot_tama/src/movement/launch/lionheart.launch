@@ -1,0 +1,7 @@
+<launch>
+  <node name="heartbeat_node" pkg="heartbeat" type="heartbeat_node" output="screen"/>
+  <node name="movement" pkg="movement" type="movement" output="screen"/>
+  <node name="serial_node"        pkg="rosserial_python"      type="serial_node.py">
+  <param name="port"              type="string"               value="/dev/ttyACM0"/>
+  </node>
+</launch>
