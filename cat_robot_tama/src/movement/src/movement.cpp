@@ -128,18 +128,18 @@ int main(int argc, char** argv){
 
 
         else if(joy.buttonStates[SQUARE]){
-            if(kasus!=0 && lantai2 == 0){
+            if(kasus!=0 && lantai2 == 0 && kasus != 3 && kasus != 6 && kasus != 9){
                 addData(kasus, motion.poseX, motion.poseY, motion.poseH);
                 kasus = 0;
             }
             if(lantai2){
-                array_msg.data[0] = 56; //grip
+                array_msg.data[0] = 56;
             }else{
                 array_msg.data[0] = SQUARE;
             }
             ROS_INFO("\nCase:%d POSE x:%f, y:%f, h:%f\n", prevcase, motion.poseX, motion.poseY, motion.poseH);
         }else if(joy.buttonStates[CIRCLE]){
-            if(kasus!=0 && lantai2 == 0){
+            if(kasus!=0 && lantai2 == 0 && kasus != 3 && kasus != 6 && kasus != 9 ){
                 addData(kasus, motion.poseX, motion.poseY, motion.poseH);
                 kasus = 0;
             }
@@ -180,7 +180,7 @@ int main(int argc, char** argv){
         }
         
         else if(caseBot == 1){
-            motion.move_to(0,6,0);
+            motion.move_to(3,6,0);
             motion.move_to(ambil1[0],6,0);
 
             array_msg.data[0] = 31;
