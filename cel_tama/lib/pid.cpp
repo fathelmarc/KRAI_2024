@@ -1,14 +1,6 @@
 #include "pid.h"
-
-void PID::parameter(float kp_, float ki_, float kd_){
-    kp = kp_;
-    ki = ki_;
-    kd = kd_;
-}
-void PID::parameterT(float kp_, float ki_, float kd_){
-    kpT = kp_;
-    kiT = ki_;
-    kdT = kd_;  
+struct param{
+    float kp,ki,kd;
 }
 double PID::delta() {
     time_point currentTime = clock::now();
@@ -34,7 +26,6 @@ float PID::calculatePID(float error, float limit,bool condition){
     eDerivative = (eProportional - prevError)/deltaT;
     prevError = eProportional;
     u = kp*eProportional + ki*eIntegral + kd*eDerivative;
-    float uT = kpT * eProportional + kiT * eIntegral + kdT * eDerivative;
-    float output = condition ? uT : u;
+    float output = u;
     return std::fmax(-limit, std::fmin(output, limit));
 }
